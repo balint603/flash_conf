@@ -28,6 +28,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "fc.h"
+#include "test.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -88,7 +89,7 @@ static shell_configuration_t shell_conf = {
 };
 
 void blinking_task() {
-	while (1) {
+	while ( 1 ) {
 		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
 		vTaskDelay(500 / portTICK_PERIOD_MS);
 	}
@@ -156,6 +157,7 @@ int main(void)
   /* add threads, ... */
   xTaskCreate(blinking_task, "Blink it Task", 512, NULL, 6, NULL);
   sh_init(&shell_conf);
+  test_start();
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */

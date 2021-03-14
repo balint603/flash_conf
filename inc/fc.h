@@ -28,7 +28,12 @@
 
 #include "eeprom.h"
 
+#define EEPROM_VIRT_ADDR_START	(0)
+#define EEPROM_VIRT_ADDR_END	(499)
+#define EEPROM_DATA_SIZE		(EEPROM_VIRT_ADDR_END - EEPROM_VIRT_ADDR_START + 1)
+
 typedef enum {FC_INT, FC_FLOAT, FC_STR} config_types_en;
+typedef enum {FC_OK, FC_ERR_NOT_FOUND, FC_ERR_INVALID_PARAM, FC_ERR_NO_FLASH} fc_err_t;
 
 typedef struct {
 	int as_int;
@@ -56,27 +61,26 @@ void fc_init(fc_config_t *descriptor, int descr_length);
 
 /** \brief Save changed values to flash.
  * */
-void fc_write_changed();
+fc_err_t fc_save_running();
 
 /**	\brief Setter functions.
  * 	\param	name		- key or name of the data (must be contained in descriptor array)
  * 	\param	val			- input data
- * 	\param	write		- write or just store the data
- * 							 - when false you should later call fc_write_change() function to write changes to flash
- * 	\return	true		- value is saved
- * 	\return false		- cannot be saved or wrong value
+ * 	\param	write		- write (not null) or just store the data (0)
+ * 							 - when 0 you should later call fc_save_running() function to write changes to flash
+ * 	\return	fc_err_t error codes.
  * */
-bool fc_set_int(char *name, int val, bool write);
-bool fc_set_float(char *name, float val, bool write);
-bool fc_set_str(char *name, char *val, bool write);
+fc_err_t fc_set_int(char *name, int val, int write);
+fc_err_t fc_set_float(char *name, float val, int write);
+fc_err_t fc_set_str(char *name, char *val, int write);
 
 /**	\brief Getter functions.
  * 	\param	name		- key or name of the data
- * 	\return 			- output value from flash or default value (see descriptor array) if cannot be found
+ * 	\return	fc_err_t error codes.
  * */
-int fc_get_int(char *name);
-float fc_get_float(char *name);
-char *fc_get_str(char *name);
+fc_err_t fc_get_int(char *name, int *out);
+fc_err_t fc_get_float(char *name, float *out);
+fc_err_t fc_get_str(char *name, char *out);
 
 /**			@} */ //end of Flash_config_include group  */
 #endif /* FC_H_ */
