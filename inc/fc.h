@@ -5,7 +5,7 @@
  *	\date 10 March 2021
  *
  *	\section intro Introduction
- *	This module purpose is to hide lower lever EEPROM write/read operations and able to save configuration variables on flash memory of STM32. (Tested on F091).
+ *	This module purpose is to hide lower lever NVS write/read operations and able to save configuration variables on flash memory of STM32. (Tested on F091).
  *
  *  A configuration value can be defined with the following data:
  *  -	name				- a short string which is basically a key to the variable
@@ -26,17 +26,12 @@
 /** 	@defgroup flash_config
  * 		\brief Flash configuration values. @{  */
 
-#include "eeprom.h"
-
-#define EEPROM_VIRT_ADDR_START	(0)
-#define EEPROM_VIRT_ADDR_END	(499)
-#define EEPROM_DATA_SIZE		(EEPROM_VIRT_ADDR_END - EEPROM_VIRT_ADDR_START + 1)
-
-typedef enum {FC_INT, FC_FLOAT, FC_STR} config_types_en;
-typedef enum {FC_OK, FC_ERR_NOT_FOUND, FC_ERR_INVALID_PARAM, FC_ERR_NO_FLASH} fc_err_t;
+typedef enum {FC_INT, FC_UINT, FC_FLOAT, FC_STR} config_types_en;
+typedef enum {FC_OK, FC_ERR_INVALID_PARAM, FC_ERR_NOT_FOUND, FC_ERR_NO_FLASH, FC_ERR_INITIAL} fc_err_t;
 
 typedef struct {
 	int as_int;
+	uint32_t as_uint;
 	float as_float;
 	char *as_string;
 } fc_val_t;
@@ -48,20 +43,18 @@ typedef struct {
 	fc_val_t min_value;
 	fc_val_t max_value;
 	fc_val_t default_value;
+	uint16_t KEY;
 } fc_config_t;
 
 /**	\brief Initialization.
  *  Call this function before use setter-getters.
- *	Reading configuration descriptor and create virtual addresses to EEPROM.
+ *	Reading configuration descriptor.
  *
  * 	\param	descriptor		- fc_config_t array which contains information about configuration values
+ * 							It must be a statically allocated descriptor array.
  * 	\param	descr_length	- length of this array
  * */
-void fc_init(fc_config_t *descriptor, int descr_length);
-
-/** \brief Save changed values to flash.
- * */
-fc_err_t fc_save_running();
+fc_err_t fc_init(fc_config_t *descriptor, int descr_length);
 
 /**	\brief Setter functions.
  * 	\param	name		- key or name of the data (must be contained in descriptor array)
@@ -70,15 +63,17 @@ fc_err_t fc_save_running();
  * 							 - when 0 you should later call fc_save_running() function to write changes to flash
  * 	\return	fc_err_t error codes.
  * */
-fc_err_t fc_set_int(char *name, int val, int write);
-fc_err_t fc_set_float(char *name, float val, int write);
-fc_err_t fc_set_str(char *name, char *val, int write);
+fc_err_t fc_set_int(char *name, int val);
+fc_err_t fc_set_uint(char *name, uint32_t val);
+fc_err_t fc_set_float(char *name, float val);
+fc_err_t fc_set_str(char *name, char *val);
 
 /**	\brief Getter functions.
  * 	\param	name		- key or name of the data
  * 	\return	fc_err_t error codes.
  * */
 fc_err_t fc_get_int(char *name, int *out);
+fc_err_t fc_get_uint(char *name, uint32_t *out);
 fc_err_t fc_get_float(char *name, float *out);
 fc_err_t fc_get_str(char *name, char *out);
 
