@@ -26,8 +26,11 @@
 /** 	@defgroup flash_config
  * 		\brief Flash configuration values. @{  */
 
+#define INT_DEF		(0)
+#define UINT_DEF	(1)
+
 typedef enum {FC_INT, FC_UINT, FC_FLOAT, FC_STR} config_types_en;
-typedef enum {FC_OK, FC_ERR_INVALID_PARAM, FC_ERR_NOT_FOUND, FC_ERR_NO_FLASH, FC_ERR_INITIAL} fc_err_t;
+typedef enum {FC_OK, FC_ERR_INVALID_PARAM, FC_ERR_NOT_FOUND, FC_ERR_NO_FLASH, FC_ERR_DESCRIPTOR_ERR} fc_err_t;
 
 typedef struct {
 	int as_int;
