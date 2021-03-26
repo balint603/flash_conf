@@ -23,7 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "shell.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,7 +51,15 @@ const osThreadAttr_t defaultTask_attributes = {
   .stack_size = 128 * 4
 };
 /* USER CODE BEGIN PV */
-
+shell_configuration_t shell_cfg = {
+		.uart = &huart2,
+		.commands = NULL,
+		.stack_size = 512,
+		.priority = 7,
+		.rtc = NULL,
+		.history_buffer_size = 512,
+		.app_title = "TEST FC"
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -99,7 +107,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  sh_init(&shell_cfg);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -262,10 +270,14 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
+	  test_start();
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 1);
+    osDelay(100 / portTICK_PERIOD_MS);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 0);
+    osDelay(900 / portTICK_PERIOD_MS);
   }
   /* USER CODE END 5 */
 }

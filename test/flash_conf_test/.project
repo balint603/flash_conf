@@ -37,6 +37,11 @@
 			<location>/home/major/Documents/STM/Workbench/stm32lib/flash_conf/src</location>
 		</link>
 		<link>
+			<name>nvs_src</name>
+			<type>2</type>
+			<location>/home/major/Documents/STM/Workbench/stm32lib/nvs/src</location>
+		</link>
+		<link>
 			<name>shell_src</name>
 			<type>2</type>
 			<location>/home/major/Documents/STM/Workbench/stm32lib/shell/src</location>

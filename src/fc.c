@@ -8,23 +8,33 @@
 #include <string.h>
 #include <limits.h>
 #include <float.h>
+#include <errno.h>
 
 #include "stm32f0xx.h"
 #include "fc.h"
 #include "shell.h"
+#include "nvs.h"
 
+
+const char *TAG = "Flash Config - ";
+
+int g_initialized;
 fc_config_t *g_descriptor_ptr;
 size_t g_descr_len;
 
-const char *TAG = "Flash Config";
+struct nvs_fs g_nvs = {
+		.offset = FC_NVS_OFFSET,
+		.sector_size = FLASH_PAGE_SIZE,
+		.sector_count = 2
+};
 
 
-static int get_key_from_descriptor(const char *name) {
+static int get_index_from_descriptor(const char *name) {
 	if ( !g_descriptor_ptr || !name )
 		return -1;
 	for ( int i = 0; i < g_descr_len; i++ ) {
 		if ( !strcmp(g_descriptor_ptr[i].name, name) ) {
-			return g_descriptor_ptr[i].KEY;
+			return i;
 		}
 	}
 	return -1;
@@ -39,6 +49,14 @@ static int count_name_in_descriptor(const char *name, fc_config_t *descr_arr, in
 	return cnt;
 }
 
+static int check_data_type_in_descriptor(int index, config_types_en type) {
+	if ( !g_descriptor_ptr )
+		return -1;
+	if ( g_descriptor_ptr[index].type != type )
+		return 1;
+	return 0;
+}
+
 /**	\brief Modul initialization.
  * 	Must be called before any of its functions.
  * 	\return FC_ERR_INVALID_PARAM	- NULL input
@@ -46,6 +64,9 @@ static int count_name_in_descriptor(const char *name, fc_config_t *descr_arr, in
  * */
 fc_err_t fc_init(fc_config_t *descriptor, int descr_length) {
 	fc_err_t res = FC_OK;
+	if ( g_initialized ) {
+		return FC_ERR_NOT_FOUND;
+	}
 	if ( !descriptor )
 		return FC_ERR_INVALID_PARAM;
 	for ( int i = 0; i < descr_length; i++ ) {
@@ -111,23 +132,98 @@ fc_err_t fc_init(fc_config_t *descriptor, int descr_length) {
 				break;
 		}
 	}
-end:
-	g_descr_len = descr_length;
-	g_descriptor_ptr = descriptor;
+	if ( FC_OK == res )
+		pr_info("%s Descriptor check passed.", TAG);
+
+	int nvs_res = nvs_init(&g_nvs, TAG);
+	if ( nvs_res ) {
+		pr_err("%s nvs initializing error. Code: %i", TAG, res);
+		res = FC_ERR_NO_FLASH;
+	} else {
+		g_descr_len = descr_length;
+		g_descriptor_ptr = descriptor;
+		g_initialized = 1;
+	}
+
 	return res;
 }
 
-fc_err_t fc_set_int(char *name, int val) {
 
+
+fc_err_t fc_set_int(const char *name, int val) {
+	fc_err_t retval = FC_OK;
+
+	int i = get_index_from_descriptor(name);
+	if ( i < 0 ) {
+		retval = FC_ERR_INVALID_PARAM;
+		goto err;
+	}
+
+	if ( g_descriptor_ptr[i].min_value.as_int > val
+	 ||  g_descriptor_ptr[i].max_value.as_int < val ) {
+		retval = FC_ERR_INVALID_PARAM;
+		goto err;
+	}
+
+	if ( check_data_type_in_descriptor(g_descriptor_ptr[i].type, FC_INT) ) {
+		pr_err("%s Wrong setter function is called for config value: %s", TAG, g_descriptor_ptr[i].name);
+		retval = FC_ERR_INVALID_PARAM;
+		goto err;
+	}
+
+	int nvs_ret = nvs_write(&g_nvs, g_descriptor_ptr[i].KEY, &val, sizeof(int));
+	if ( nvs_ret != sizeof(int)) {
+		retval = FC_ERR_NO_FLASH;
+		goto err;
+	}
+	pr_info("%s %s=%i saved.", TAG, name, val);
+err:
+	return retval;
 }
-fc_err_t fc_set_uint(char *name, uint32_t val);
-fc_err_t fc_set_float(char *name, float val);
-fc_err_t fc_set_str(char *name, char *val);
 
-fc_err_t fc_get_int(char *name, int *out);
-fc_err_t fc_get_uint(char *name, uint32_t *out);
-fc_err_t fc_get_float(char *name, float *out);
-fc_err_t fc_get_str(char *name, char *out);
+fc_err_t fc_set_uint(const char *name, uint32_t val);
+fc_err_t fc_set_float(const char *name, float val);
+fc_err_t fc_set_str(const char *name, char *val);
+
+fc_err_t fc_get_int(const char *name, int *out) {
+	fc_err_t retval = FC_OK;
+	if ( !name || !out) {
+		retval = FC_ERR_INVALID_PARAM;
+		goto err;
+	}
+	int i = get_index_from_descriptor(name);
+	if ( i < 0 ) {
+		retval = FC_ERR_INVALID_PARAM;
+		goto err;
+	}
+
+	*out = g_descriptor_ptr[i].default_value.as_int;
+
+	if ( check_data_type_in_descriptor(g_descriptor_ptr[i].type, FC_INT) ) {
+		pr_err("%s Wrong getter function is called for config value: %s", TAG, g_descriptor_ptr[i].name);
+		retval = FC_ERR_INVALID_PARAM;
+		goto err;
+	}
+
+	int outval;
+	int nvs_ret = nvs_read(&g_nvs, g_descriptor_ptr[i].KEY, &outval, sizeof(int));
+	if ( nvs_ret == sizeof(int) ) {
+		if ( g_descriptor_ptr[i].min_value.as_int > outval
+		   ||  g_descriptor_ptr[i].max_value.as_int < outval ) {
+			retval = FC_ERR_NO_FLASH;
+		} else {
+			*out = outval;
+		}
+	} else {
+		pr_err("%s Cannot get from nvs. Code: %i", TAG, nvs_ret);
+		retval = FC_ERR_NOT_FOUND;
+	}
+err:
+	return retval;
+}
+fc_err_t fc_get_uint(const char *name, uint32_t *out);
+fc_err_t fc_get_float(const char *name, float *out);
+fc_err_t fc_get_str(const char *name, char *out);
 
 
 
