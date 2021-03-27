@@ -30,8 +30,10 @@
 #define FC_NVS_SECTOR_SIZE		(FLASH_PAGE_SIZE)
 #define FC_NVS_SECTOR_COUNT		(2)
 
+#define FC_STR_GET_SET
+
 typedef enum {FC_INT, FC_UINT, FC_FLOAT, FC_STR} config_types_en;
-typedef enum {FC_OK, FC_ERR_INVALID_PARAM, FC_ERR_NOT_FOUND, FC_ERR_NO_FLASH, FC_ERR_DESCRIPTOR_ERR, FC_ERR_CORRUPTED_DATA} fc_err_t;
+typedef enum {FC_OK, FC_ERR_INVALID_PARAM, FC_ERR_NOT_FOUND, FC_ERR_NO_FLASH, FC_ERR_CORRUPTED_DATA} fc_err_t;
 
 typedef struct {
 	int as_int;
@@ -60,6 +62,8 @@ typedef struct {
  * */
 fc_err_t fc_init(fc_config_t *descriptor, int descr_length);
 
+void fc_deinit();
+
 /**	\brief Setter functions.
  * 	\param	name		- key or name of the data (must be contained in descriptor array)
  * 	\param	val			- input data
@@ -70,7 +74,9 @@ fc_err_t fc_init(fc_config_t *descriptor, int descr_length);
 fc_err_t fc_set_int(const char *name, int val);
 fc_err_t fc_set_uint(const char *name, uint32_t val);
 fc_err_t fc_set_float(const char *name, float val);
+#ifdef FC_STR_GET_SET
 fc_err_t fc_set_str(const char *name, char *val);
+#endif
 
 /**	\brief Getter functions.
  * 	\param	name		- key or name of the data
@@ -79,7 +85,9 @@ fc_err_t fc_set_str(const char *name, char *val);
 fc_err_t fc_get_int(const char *name, int *out);
 fc_err_t fc_get_uint(const char *name, uint32_t *out);
 fc_err_t fc_get_float(const char *name, float *out);
+#ifdef FC_STR_GET_SET
 fc_err_t fc_get_str(const char *name, char *out);
+#endif
 
 /**			@} */ //end of Flash_config_include group  */
 #endif /* FC_H_ */
