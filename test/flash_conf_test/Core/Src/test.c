@@ -9,6 +9,7 @@
 
 #include "main.h"
 #include "fc.h"
+#include "nvs.h"
 #include "shell.h"
 
 static const char *TAG = "Test fc - ";
@@ -23,6 +24,12 @@ fc_config_t descriptor[3] = {
 		{ .name = "setgetint", .type = FC_INT, .min_value = { .as_int = -1}, .max_value = { .as_int = 10000}, .default_value = { .as_int = 500 }, .KEY = 156 },
 		{ .name = "uiuiuiui", .type = FC_UINT, .min_value = { .as_uint = 0}, .max_value = { .as_uint = 10000}, .default_value = { .as_uint = 300 }, .KEY = 999 },
 		{ .name = "setgetfl", .type = FC_FLOAT, .min_value = { .as_float = -10}, .max_value = { .as_float = 10000}, .default_value = { .as_float = 1.1 }, .KEY = 157 }
+};
+
+struct nvs_fs g_nvs = {
+		.offset = 0x0801F000,
+		.sector_size = FLASH_PAGE_SIZE,
+		.sector_count = 2
 };
 
 int test_setget_int() {
@@ -105,22 +112,22 @@ int test_descriptor_check() {
 	};
 	int res = 0;
 
-	if ( FC_ERR_INVALID_PARAM != fc_init(desc_limit_d, 1) ) {
+	if ( FC_ERR_INVALID_PARAM != fc_init(desc_limit_d, 1, &g_nvs) ) {
 		pr_info("%s Default is lower then lower limit test failed", TAG);
 		res += 1;
 	}
 	fc_deinit();
-	if ( FC_ERR_INVALID_PARAM != fc_init(desc_limit_u, 1) ) {
+	if ( FC_ERR_INVALID_PARAM != fc_init(desc_limit_u, 1, &g_nvs) ) {
 		pr_info("%s Default is greater then upper limit test failed", TAG);
 		res += 10;
 	}
 	fc_deinit();
-	if ( FC_ERR_INVALID_PARAM != fc_init(desc_wrong_limits, 1) ) {
+	if ( FC_ERR_INVALID_PARAM != fc_init(desc_wrong_limits, 1, &g_nvs) ) {
 		pr_info("%s Reverse limit test failed", TAG);
 		res += 100;
 	}
 	fc_deinit();
-	if ( FC_ERR_INVALID_PARAM != fc_init(desc_same_name, 2) ) {
+	if ( FC_ERR_INVALID_PARAM != fc_init(desc_same_name, 2, &g_nvs) ) {
 		pr_info("%s Same name test failed", TAG);
 		res += 1000;
 	}
@@ -129,7 +136,7 @@ int test_descriptor_check() {
 
 void test_start() {
 	pr_info("%s start", TAG);
-	if ( fc_init(descriptor, descr_len) )	pr_err("%s fc_init failed", TAG);
+	if ( fc_init(descriptor, descr_len, &g_nvs) )	pr_err("%s fc_init failed", TAG);
 	if ( test_setget_int() )				pr_err("%s setget_int test failed", TAG);
 	if ( test_setget_uint() )				pr_err("%s setget_uint test failed", TAG);
 	if ( test_setget_float() )				pr_err("%s setget_float test failed", TAG);

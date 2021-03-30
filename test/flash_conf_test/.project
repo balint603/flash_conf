@@ -32,6 +32,11 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>flash_conf_inc</name>
+			<type>2</type>
+			<location>/home/major/Documents/STM/Workbench/stm32lib/flash_conf/inc</location>
+		</link>
+		<link>
 			<name>flash_conf_src</name>
 			<type>2</type>
 			<location>/home/major/Documents/STM/Workbench/stm32lib/flash_conf/src</location>

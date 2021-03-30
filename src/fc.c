@@ -22,17 +22,19 @@ int g_initialized;
 fc_config_t *g_descriptor_ptr;
 size_t g_descr_len;
 
-struct nvs_fs g_nvs = {
+struct nvs_fs g_nvs;
+/* = {
 		.offset = FC_NVS_OFFSET,
 		.sector_size = FLASH_PAGE_SIZE,
 		.sector_count = 2
-};
+};*/
 
 
 static int get_index_from_descriptor(const char *name) {
 	if ( !g_descriptor_ptr || !name )
 		return -1;
-	for ( int i = 0; i < g_descr_len; i++ ) {
+	int i = 0;
+	for (; i < g_descr_len; i++ ) {
 		if ( !strcmp(g_descriptor_ptr[i].name, name) ) {
 			return i;
 		}
@@ -57,12 +59,7 @@ static int check_data_type_in_descriptor(int index, config_types_en type) {
 	return 0;
 }
 
-/**	\brief Modul initialization.
- * 	Must be called before any of its functions.
- * 	\return FC_ERR_INVALID_PARAM	- NULL input
- * 			FC_ERR_DESCRIPTOR_ERR	- A problem with descriptor but no fatal.
- * */
-fc_err_t fc_init(fc_config_t *descriptor, int descr_length) {
+fc_err_t fc_init(fc_config_t *descriptor, int descr_length, struct nvs_fs *nvs) {
 	fc_err_t res = FC_OK;
 	if ( g_initialized ) {
 		return FC_ERR_NOT_FOUND;
@@ -73,13 +70,13 @@ fc_err_t fc_init(fc_config_t *descriptor, int descr_length) {
 
 		if ( !descriptor[i].name )
 			pr_warning("%s: Descriptor name cannot be NULL! At %i", TAG, i);
-
-		if ( 1 < count_name_in_descriptor(descriptor[i].name, descriptor, descr_length) ) {		// Check the occurrence of names.
+		// Check the occurrence of names.
+		if ( 1 < count_name_in_descriptor(descriptor[i].name, descriptor, descr_length) ) {
 			pr_warning("%s: Descriptor name [%s] should not be the same! ", TAG, descriptor[i].name);
 			pr_warning("%s: Only the first descriptor [named=%s] will be handled.", TAG, descriptor[i].name);
 			res = FC_ERR_INVALID_PARAM;
 		}
-
+		// Check each configuration variable settings
 		switch ( descriptor[i].type ) {
 			case FC_INT:
 				if ( descriptor[i].min_value.as_int > descriptor[i].max_value.as_int ) {
@@ -136,6 +133,7 @@ fc_err_t fc_init(fc_config_t *descriptor, int descr_length) {
 				break;
 		}
 	}
+
 	int nvs_res = nvs_init(&g_nvs, TAG);
 	if ( nvs_res ) {
 		pr_err("%s nvs initializing error. Code: %i", TAG, nvs_res);
@@ -143,6 +141,7 @@ fc_err_t fc_init(fc_config_t *descriptor, int descr_length) {
 	} else {
 		g_descr_len = descr_length;
 		g_descriptor_ptr = descriptor;
+		g_nvs = *nvs;
 		g_initialized = 1;
 	}
 
@@ -310,7 +309,7 @@ fc_err_t fc_get_int(const char *name, int *out) {
 			*out = outval;
 		}
 	} else {
-		pr_err("%s Cannot get from nvs. Code: %i", TAG, nvs_ret);
+		pr_debug("%s Cannot get from nvs. Code: %i", TAG, nvs_ret);
 		retval = FC_ERR_NOT_FOUND;
 	}
 err:
@@ -347,7 +346,7 @@ fc_err_t fc_get_uint(const char *name, uint32_t *out) {
 			*out = outval;
 		}
 	} else {
-		pr_err("%s Cannot get from nvs. Code: %i", TAG, nvs_ret);
+		pr_debug("%s Cannot get from nvs. Code: %i", TAG, nvs_ret);
 		retval = FC_ERR_NOT_FOUND;
 	}
 err:
@@ -384,7 +383,7 @@ fc_err_t fc_get_float(const char *name, float *out) {
 			*out = outval;
 		}
 	} else {
-		pr_err("%s Cannot get from nvs. Code: %i", TAG, nvs_ret);
+		pr_debug("%s Cannot get from nvs. Code: %i", TAG, nvs_ret);
 		retval = FC_ERR_NOT_FOUND;
 	}
 err:
@@ -417,7 +416,7 @@ fc_err_t fc_get_str(const char *name, char *out) {
 	if ( nvs_ret == sizeof(float) ) {
 		*out = outval;
 	} else {
-		pr_err("%s Cannot get from nvs. Code: %i", TAG, nvs_ret);
+		pr_debug("%s Cannot get from nvs. Code: %i", TAG, nvs_ret);
 		retval = FC_ERR_NOT_FOUND;
 	}
 err:
