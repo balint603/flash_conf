@@ -1,11 +1,12 @@
 /**	\mainpage Flash Config module for STM32
- * fc.h
  *	\version 1
  *	\author	Major
  *	\date 10 March 2021
  *
  *	\section intro Introduction
- *	This module purpose is to hide lower lever NVS operations and able to save configuration variables on flash memory of STM32. (Tested on F091).
+ *	<i>Save and load configuration values using internal flash memory.</i>
+ *
+ *	This module purpose uses lower level (NVS) operations and able to save configuration variables on flash memory of STM32. (Tested on F091).
  *	Extra safety is added with defining descriptor table because the user is able to choose limits and default value of a specific variable.
  * 	Thread-safe is granted on (NVS module) low level.
  *
@@ -22,8 +23,11 @@
  *  -	MAX value			- upper limit of the variable
  *  -	default value		- default value
  *
+ *	\subsection Req Requirements:
+ *	-	NVS module: https://github.com/balint603/nvs.git
+ *	-	shell: https://github.com/balint603/stm32lib/tree/main/shell
  *
- *\section howto How to import this module (CUBE IDE, ECLIPSE)
+ *\section howto How to import this module (Cube IDE, Eclipse)
  *	1. 	You can clone or download the repository from https://github.com/balint603/flash_conf.git.
  *	2.	Create a linked folder at <ProjectName>->New->Folder. You should rename it to help to recognize it.
  * 	3.	Go to the Project->Properties->Paths and Symbols. Then add the project inc folder then the linked src folder.
@@ -36,9 +40,12 @@
 
 /** 	@defgroup flash_config
  * 		\brief Flash configuration variables.
- *		Use fc_init() function before using any of setter/getter functions.
+ *		\subsection Init Initialization:
  *
- *		Getter functions always return a value when the name parameter can be found in the configuration (fc_config_t) array.
+ *		Use fc_init() function before using any of setter/getter functions.\n
+ *		Parameter nvs is a configuration parameter, please select flash offset address and page size carefully.
+ *
+ *		Getter functions always return a value when the name parameter can be found in the configuration (fc_config_t) array.\n
  *		Default value is returned when there is no such entry saved to flash yet but found in the configuration array.
  *
  * 		@{

@@ -23,11 +23,6 @@ fc_config_t *g_descriptor_ptr;
 size_t g_descr_len;
 
 struct nvs_fs g_nvs;
-/* = {
-		.offset = FC_NVS_OFFSET,
-		.sector_size = FLASH_PAGE_SIZE,
-		.sector_count = 2
-};*/
 
 
 static int get_index_from_descriptor(const char *name) {
@@ -153,7 +148,6 @@ void fc_deinit() {
 	g_descriptor_ptr = NULL;
 	g_initialized = 0;
 }
-
 
 fc_err_t fc_set_int(const char *name, int val) {
 	fc_err_t retval = FC_OK;
