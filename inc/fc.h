@@ -85,6 +85,8 @@ typedef struct {
  * 	\param	descriptor					- fc_config_t array which contains information about configuration values
  * 							It must be a statically allocated descriptor array.
  * 	\param	descr_length				- length of this array
+ * 	\param	nvs							- nvs_fs type configuration structure.
+ * 		Parameters offset, sector_size, sector_count must be set before initialization.
  * 	\return		FC_OK					- descriptor check is completed without error
  * 	\return		FC_ERR_INVALID_PARAM	- wrong descriptor
  * 	\return		FC_ERR_NO_FLASH			- NVS initialization error occured

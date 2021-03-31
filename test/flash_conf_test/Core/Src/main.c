@@ -50,14 +50,15 @@ const osThreadAttr_t defaultTask_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 2048
 };
+
 /* USER CODE BEGIN PV */
 shell_configuration_t shell_cfg = {
 		.uart = &huart2,
 		.commands = NULL,
-		.stack_size = 512,
+		.stack_size = 1024,
 		.priority = 7,
 		.rtc = NULL,
-		.history_buffer_size = 512,
+		.history_buffer_size = 256,
 		.app_title = "TEST FC"
 };
 /* USER CODE END PV */
@@ -257,7 +258,12 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+        if (huart == &huart2) {
+                sh_receive_complete(huart);
+                return;
+        }
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
